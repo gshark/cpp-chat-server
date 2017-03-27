@@ -117,11 +117,11 @@ void Executor::changeFlags(int fd, uint32_t flags) {
 
 void Executor::removeHandler(int fd) {
     std::map<int, EventHandler>::iterator found_it = handlers.find(fd);
-    assert(found_it != handlers.end());
-    /*if (handlers.find(fd) == handlers.end()) {
+    //assert(found_it != handlers.end());
+    if (handlers.find(fd) == handlers.end()) {
         //TODO ?? exception или assert
         return;
-    }*/
+    }
     handlers.erase(found_it);
     int r = epoll_ctl(globalfd.get_fd(), EPOLL_CTL_DEL, fd, 0);
     if (r == -1) {

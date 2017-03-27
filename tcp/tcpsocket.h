@@ -3,7 +3,7 @@
 
 #include "logger.h"
 #include <executor.h>
-
+#include <fd_closer.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -35,7 +35,7 @@ private:
     TcpSocket& operator = (const TcpSocket&) = delete;
     friend class TcpServerSocket;
 
-    int fd;
+    fd_closer fd;
     int flags;
     //string host;
     //size_t port;

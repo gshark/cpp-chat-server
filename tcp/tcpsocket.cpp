@@ -1,5 +1,5 @@
 #include "tcpsocket.h"
-
+#include <iostream>
 #include <sys/types.h>
 #include <sys/epoll.h>
 #include <signal.h>
@@ -32,7 +32,7 @@ TcpSocket::TcpSocket(Executor *executor) :
 
 TcpSocket::TcpSocket(Executor *executor, int fd, sockaddr_in in_addr) :
     TcpSocket(executor) {
-    this->fd = fd;
+    this->fd = fd_closer(fd);
     this->in_addr = in_addr;
     //this->host = host;
     //this->port = port;
@@ -43,21 +43,21 @@ TcpSocket::TcpSocket(Executor *executor, int fd, sockaddr_in in_addr) :
     Logger::info("Opened connection on descriptor " + std::to_string(fd));
 }
 void TcpSocket::close() {
-    if (fd == NONE) {
+    if (fd.get_fd() == NONE) {
         return;
     }
-    Logger::info("Closing connection on descriptor " + std::to_string(fd));
+    Logger::info("Closing connection on descriptor " + std::to_string(fd.get_fd()));
     clearBuffers();
-    executor->removeHandler(fd);
-    int r = ::shutdown(fd, SHUT_RDWR);
+    //std::cerr << "123";
+    executor->removeHandler(fd.get_fd());
+    int r = ::shutdown(fd.get_fd(), SHUT_RDWR);
     if (r != 0 && errno != ENOTCONN) {
         Logger::error(std::string("Shutdown error: ") + strerror(errno));
-        r = ::close(fd);
         throw std::runtime_error("TcpSocket::close(), shutdown() failed");
     }
-    r = ::close(fd);
+    /*r = ::close(fd);
     assert(r == 0);
-    fd = NONE;
+    fd = NONE;*/
     //host = "";
     //port = 0;
     in_addr = {};
@@ -100,7 +100,7 @@ void TcpSocket::handler(const epoll_event &event) {
         char buffer[BUFFER_SIZE_ON_READ];
         //memset(buffer, 0, sizeof buffer);
         while (true) {
-            ssize_t readBytes = ::read(fd, buffer, BUFFER_SIZE_ON_READ);
+            ssize_t readBytes = ::read(fd.get_fd(), buffer, BUFFER_SIZE_ON_READ);
             if (readBytes == -1) {
                 if (errno != EAGAIN) {
                     reachedEndOfFile = true;
@@ -155,11 +155,11 @@ bool TcpSocket::isErrorSocket(const epoll_event &event) {
 }
 
 int TcpSocket::getfd() {
-    return fd;
+    return fd.get_fd();
 }
 
 bool TcpSocket::write(const char *data, size_t len) {
-    if (fd == NONE) {
+    if (fd.get_fd() == NONE) {
         return false;
     }
     appendData(data, len);
@@ -211,7 +211,7 @@ void TcpSocket::tryToWriteData() {
         for (; bufferSize < BUFFER_SIZE_ON_WRITE && it != writeBuffer.end(); ++it) {
             buffer[bufferSize++] = *it;
         }
-        ssize_t writtenBytes = ::write(fd, buffer, bufferSize);
+        ssize_t writtenBytes = ::write(fd.get_fd(), buffer, bufferSize);
         if (writtenBytes == -1) {
             break;
         }
@@ -219,9 +219,9 @@ void TcpSocket::tryToWriteData() {
         writeBuffer.erase(writeBuffer.begin(), writeBuffer.begin() + writtenBytes);
     }
     if (writeBuffer.empty() && flags != DEFAULT_FLAGS) {
-        executor->changeFlags(fd, (flags = DEFAULT_FLAGS));
+        executor->changeFlags(fd.get_fd(), (flags = DEFAULT_FLAGS));
     } else if (flags != OUT_FLAGS) {
-        executor->changeFlags(fd, (flags = OUT_FLAGS));
+        executor->changeFlags(fd.get_fd(), (flags = OUT_FLAGS));
     }
 }
 
@@ -230,5 +230,5 @@ bool TcpSocket::allReadCallback() {
 }
 
 bool TcpSocket::isClosed() {
-    return fd == NONE;
+    return fd.get_fd() == NONE;
 }

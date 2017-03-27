@@ -1,5 +1,5 @@
 #include "tcpserversocket.h"
-
+#include <iostream>
 #include <cassert>
 #include <cstring>
 
@@ -28,6 +28,7 @@ void TcpServerSocket::close() {
         return;
     }
     Logger::info("Closing server connection on " + std::to_string(listenerfd.get_fd()));
+    //std::cerr << "321";
     executor->removeHandler(listenerfd.get_fd());
     int r = ::shutdown(listenerfd.get_fd(), SHUT_RDWR);
     if (r != 0 && errno != ENOTCONN) {
@@ -149,26 +150,27 @@ std::unique_ptr<TcpSocket> TcpServerSocket::getPendingConnection() {
     }
     //int tmp = incomingfd.get_fd();
     PendingConstructorHandler pendingConstructorHandler = [=]() {
-        //fd_closer incomingfd_closer = fd_closer(incomingfd);
-        if (incomingfd == -1) {
+        fd_closer incomingfd_closer = fd_closer(incomingfd);
+        if (incomingfd_closer.get_fd() == -1) {
             return std::unique_ptr<TcpSocket>(nullptr);
             //throw std::runtime_error("TcpServerSocket::acceptConnection, lambda function pendingConstructorHandler: accept() failed");
         }
-        int r = makeSocketNonBlocking(incomingfd);
+        int r = makeSocketNonBlocking(incomingfd_closer.get_fd());
         if (r == NONE) {
             throw std::runtime_error("TcpServerSocket::acceptConnection(), makeSocketNonBlocking() failed in lambda function pendingConstructorHandler()");
         }
-        char hostbuf[NI_MAXHOST], portbuf[NI_MAXSERV];
+        /*char hostbuf[NI_MAXHOST], portbuf[NI_MAXSERV];
         memset(hostbuf, 0, sizeof hostbuf);
         memset(portbuf, 0, sizeof portbuf);
         r = getnameinfo((sockaddr*)&in_addr, in_len, hostbuf, sizeof hostbuf, portbuf, sizeof portbuf, NI_NUMERICHOST | NI_NUMERICSERV);
         if (r != 0) {
             Logger::error("An error occurred in TcpServerSocket::acceptConnection() in getnameinfo() in lambda function pendingConstructorHandler(): " + std::string(gai_strerror(r)));
             throw std::runtime_error("TcpServerSocket::acceptConnection(), getnameinfo() failed");
-        }
+        }*/
         //size_t port = ntohs(in_addr.sin_port);
         //std::unique_ptr<TcpSocket> socket(new TcpSocket(executor, incomingfd, string(hostbuf), port));
-        std::unique_ptr<TcpSocket> socket(new TcpSocket(executor, incomingfd, in_addr));
+        std::unique_ptr<TcpSocket> socket(new TcpSocket(executor, incomingfd_closer.get_fd(), in_addr));
+        incomingfd_closer.cancel();
         return std::move(socket);
     };
     /*if (newConnectionHandler) {

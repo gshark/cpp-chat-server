@@ -34,6 +34,10 @@ fd_closer& fd_closer::operator = (fd_closer&& other) {
     return *this;
 }
 
+void fd_closer::cancel() {
+    fd = -1;
+}
+
 
 
 /*chatserver*/

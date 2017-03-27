@@ -5,7 +5,7 @@
 class fd_closer
 {
 private:
-    //int fd;
+    int fd;
 public:
     fd_closer();
     fd_closer(int fd);
@@ -18,7 +18,8 @@ public:
 
     ~fd_closer();
     int get_fd() const;
-    int fd;
+    void cancel();
+
 };
 
 #endif // FD_CLOSER_H
