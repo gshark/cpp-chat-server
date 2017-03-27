@@ -15,15 +15,14 @@ using namespace std;
 class Executor {
 private:
     typedef std::function <void(epoll_event)> EventHandler;
-    //if write static doesn't work:(
-    const int MAX_EVENTS = 1024;
+    static const int MAX_EVENTS = 1024;
     //const int MAX_EVENTS;
 
     //Logger logger;
-    //fd_closer globalfd;
-    //fd_closer sigfd;
-    int globalfd;
-    int sigfd;
+    fd_closer globalfd;
+    fd_closer sigfd;
+    //int globalfd;
+    //int sigfd;
     std::vector<epoll_event> events;
     std::map<int, EventHandler> handlers;
 public:

@@ -15,11 +15,11 @@
 Executor::Executor() :
     //MAX_EVENTS(1024),
     events(MAX_EVENTS) {
-    globalfd = epoll_create1(0);
+    //globalfd = epoll_create1(0);
     //globalfd = fd_closer(epoll_create1(0));
-    //globalfd.fd = epoll_create1(0);
+    globalfd.fd = epoll_create1(0);
     //TODO проверить ошибку
-    if (globalfd == -1) {
+    if (globalfd.fd == -1) {
         Logger::error("An error occurred in Executor::Executor() in epoll_create1(): " + std::string(strerror(errno)));
         throw std::runtime_error("Executor::Executor(), epoll_create1() failed");
     }
@@ -45,20 +45,22 @@ Executor::Executor() :
         Logger::error("An error occurred in Executor::Executor() while trying to set new block signals (sigprocmask)" + std::string(strerror(errno)));
         throw std::runtime_error("Executor::Executor(), sigprocmask(SIG_BLOCK) failed");
     }
-    sigfd = signalfd(-1, &mask, 0);
-    if (sigfd == -1) {
-    //sigfd.fd = signalfd(-1, &mask, 0);
-    //if (sigfd.fd == -1) {
+    //sigfd = signalfd(-1, &mask, 0);
+    //if (sigfd == -1) {
+    sigfd.fd = signalfd(-1, &mask, 0);
+    if (sigfd.fd == -1) {
         Logger::error("An error occurred in Executor::Executor() in signalfd()" + std::string(strerror(errno)));
         throw std::runtime_error("Executor::Executor(), signalfd() failed");
     }
     epoll_event event = {};
     //memset(&event, 0, sizeof event);
-    //event.data.fd = sigfd.fd;
+    event.data.fd = sigfd.fd;
 
-    event.data.fd = sigfd;
+    //event.data.fd = sigfd;
     event.events = EPOLLIN;
-    r = epoll_ctl(globalfd, EPOLL_CTL_ADD, sigfd, &event);
+    //r = epoll_ctl(globalfd, EPOLL_CTL_ADD, sigfd, &event);
+    r = epoll_ctl(globalfd.fd, EPOLL_CTL_ADD, sigfd.fd, &event);
+
     if (r == -1) {
         Logger::error("An error occurred in Executor::Executor() in epoll_ctl() " + std::string(strerror(errno)));
         throw std::runtime_error("Executor::Executor(), epoll_ctl() failed");
@@ -76,7 +78,7 @@ int Executor::setHandler(int fd, EventHandler handler, uint32_t flags) {
     //TODO результаты find в iterator
     std::map<int, EventHandler>::iterator found_it = handlers.find(fd);
     if (found_it != handlers.end()) {
-        int exitCode = epoll_ctl(globalfd, EPOLL_CTL_MOD, fd, &event);
+        int exitCode = epoll_ctl(globalfd.fd, EPOLL_CTL_MOD, fd, &event);
         if (exitCode == -1) {
             Logger::error("An error occurred in Executor::setHandler() in epoll_ctl(EPOLL_CTL_MOD)" + std::string(strerror(errno)));
             throw std::runtime_error("Executor::setHandler(), epoll_ctl(EPOLL_CTL_MOD) failed");
@@ -85,7 +87,7 @@ int Executor::setHandler(int fd, EventHandler handler, uint32_t flags) {
         //handlers[fd] = handler;
         return exitCode;
     }
-    int exitCode = epoll_ctl(globalfd, EPOLL_CTL_ADD, fd, &event);
+    int exitCode = epoll_ctl(globalfd.fd, EPOLL_CTL_ADD, fd, &event);
     if (exitCode == 0) {
         handlers.insert(found_it, std::make_pair(fd, handler));
         //found_it->second = handler;
@@ -102,7 +104,7 @@ void Executor::changeFlags(int fd, uint32_t flags) {
     //memset(&event, 0, sizeof event);
     event.events = flags;
     event.data.fd = fd;
-    int r = epoll_ctl(globalfd, EPOLL_CTL_MOD, fd, &event);
+    int r = epoll_ctl(globalfd.fd, EPOLL_CTL_MOD, fd, &event);
     if (r == -1) {
         Logger::error("An error occurred in Executor::changeFlags() in epoll_ctl(EPOLL_CTL_MOD)" + std::string(strerror(errno)));
         throw std::runtime_error("Executor::changeFlags(), epoll_ctl(EPOLL_CTL_MOD) failed");
@@ -117,7 +119,7 @@ void Executor::removeHandler(int fd) {
         return;
     }*/
     handlers.erase(found_it);
-    int r = epoll_ctl(globalfd, EPOLL_CTL_DEL, fd, 0);
+    int r = epoll_ctl(globalfd.fd, EPOLL_CTL_DEL, fd, 0);
     if (r == -1) {
         Logger::error("An error occurred in Executor::removeHandler() in epoll_ctl(EPOLL_CTL_DEL)" + std::string(strerror(errno)));
         throw std::runtime_error("Executor::removeHandler(), epoll_ctl(EPOLL_CTL_DEL) failed");
@@ -126,14 +128,14 @@ void Executor::removeHandler(int fd) {
 
 int Executor::execute() {
     while (true) {
-        int eventsCount = epoll_wait(globalfd, events.data(), events.size(), -1);
+        int eventsCount = epoll_wait(globalfd.fd, events.data(), events.size(), -1);
         if (eventsCount == -1) {
             Logger::error("An error occurred in Executor::execute() in epoll_wait()" + std::string(strerror(errno)));
             throw std::runtime_error("Executor::execute(), epoll_wait() failed");
         }
         bool stop = false;
         for (int i = 0; i < eventsCount; ++i) {
-            if (events[i].data.fd == sigfd) {
+            if (events[i].data.fd == sigfd.fd) {
                 stop = true;
                 break;
             }
