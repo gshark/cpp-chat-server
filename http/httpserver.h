@@ -29,12 +29,12 @@ public:
     };
 
     typedef std::function <void(HttpRequest, Response)> RequestHandler;
-    enum ServerStatus {SUCCESS, ALREADY_BINDED, ALREADY_STARTED};
+    //enum ServerStatus {SUCCESS, ALREADY_BINDED, ALREADY_STARTED};
 
     HttpServer(Executor *executor);
     ~HttpServer();
 
-    ServerStatus start(int port);
+    void start(int port);
     void addHttpMatcher(const HttpMatcher &matcher, const RequestHandler &handler);
     void finish(Connection* conn);
 private:

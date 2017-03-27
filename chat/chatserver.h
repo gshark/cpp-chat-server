@@ -42,7 +42,7 @@ public:
     ChatServer(Executor *executor);
     ~ChatServer();
 
-    int start(int port);
+    void start(int port);
 };
 
 #endif // CHATSERVER_H

@@ -57,13 +57,13 @@ private:
     void handler(const epoll_event&);
     void tryToWriteData();
 public:
-    enum ConnectedState { CONNECTED, ALREADY_CONNECTED, UNKNOWN_HOST};
+    //enum ConnectedState { CONNECTED, ALREADY_CONNECTED, UNKNOWN_HOST};
 
     TcpSocket(Executor *executor);
     TcpSocket(TcpSocket&&);
     ~TcpSocket();
 
-    ConnectedState connectToHost(const string& host, size_t port = 80);
+    //ConnectedState connectToHost(const string& host, size_t port = 80);
     int getfd();
     bool write(const char *data, size_t len);
     bool write(const std::string &s);

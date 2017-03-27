@@ -5,6 +5,7 @@
 #include <http/httpobject.h>
 #include <http/httprequest.h>
 #include <memory>
+#include "fd_closer.h"
 
 using std::string;
 
@@ -20,8 +21,8 @@ private:
     static const int NONE = -1;
 
     Executor *executor;
-    int listenerfd;
-    int pendingfd;
+    fd_closer listenerfd;
+    //int pendingfd;
     //size_t port;
     //string host;
     sockaddr_in in_addr;
@@ -39,6 +40,7 @@ private:
     void acceptConnection(const epoll_event &flags);
 public:
     enum ConnectedState {SUCCESS, ALREADY_BINDED, ALREADY_CONNECTED};
+    //used in listen in HttpServer.start()
 
     TcpServerSocket(Executor *executor);
     TcpServerSocket(TcpServerSocket&&);

@@ -8,7 +8,7 @@ HttpServer::HttpServer(Executor *executor) :
     executor(executor),
     listener(executor) {}
 
-HttpServer::ServerStatus HttpServer::start(int port) {
+void HttpServer::start(int port) {
     //TcpServerSocket::ConnectedState state = listener.listen("127.0.0.1", port, [this]() {
     TcpServerSocket::ConnectedState state = listener.listen(port, [this]() {
         readRequest(listener.getPendingConnection());
@@ -25,7 +25,7 @@ HttpServer::ServerStatus HttpServer::start(int port) {
         throw std::runtime_error("Already started");
         //return ALREADY_STARTED;
     }
-    return SUCCESS;
+    //return SUCCESS;
 }
 
 HttpServer::~HttpServer() {

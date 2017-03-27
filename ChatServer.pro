@@ -29,7 +29,6 @@ SOURCES += main.cpp \
     logger.cpp \
     executor.cpp \
     http/httpmatcher.cpp \
-    preparation.cpp \
     fd_closer.cpp
 
 HEADERS += \

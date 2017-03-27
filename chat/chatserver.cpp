@@ -133,8 +133,8 @@ ChatServer::ChatServer(Executor *executor) :
 ChatServer::~ChatServer() {
 }
 
-int ChatServer::start(int port) {
-    return httpServer->start(port);
+void ChatServer::start(int port) {
+    httpServer->start(port);
 }
 
 string ChatServer::getStringByFile(const char *name) {

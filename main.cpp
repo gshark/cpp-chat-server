@@ -9,7 +9,9 @@ int main(int, char**) {
     ChatServer server(&executor);
     //Logger logger;
     try {
-        Logger::status(server.start(2390));
+        Executor executor;
+        ChatServer server(&executor);
+        server.start(2390);
         return executor.execute();
     } catch (std::exception const &e) {
         Logger::error("Starting server failed: " + std::string(e.what()));
