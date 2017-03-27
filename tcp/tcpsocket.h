@@ -29,15 +29,17 @@ private:
     static const size_t BUFFER_SIZE_ON_WRITE = 4096;
 
     //TODO host и port привести в порядок, port -> int, host -> string
-    TcpSocket(Executor *executor, int fd, string host, size_t port);
+    //TcpSocket(Executor *executor, int fd, string host, size_t port);
+    TcpSocket(Executor *executor, int fd, sockaddr_in in_addr);
     TcpSocket(const TcpSocket&) = delete;
     TcpSocket& operator = (const TcpSocket&) = delete;
     friend class TcpServerSocket;
 
     int fd;
     int flags;
-    string host;
-    size_t port;
+    //string host;
+    //size_t port;
+    sockaddr_in in_addr;
     std::vector<char> readBuffer;
     std::vector<char> writeBuffer;
 

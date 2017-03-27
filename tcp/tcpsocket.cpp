@@ -18,7 +18,7 @@ TcpSocket::TcpSocket(Executor *executor) :
     canRead(true),
     allDataRead(false) {}
 
-TcpSocket::TcpSocket(Executor *executor, int fd, string host, size_t port) :
+/*TcpSocket::TcpSocket(Executor *executor, int fd, string host, size_t port) :
     TcpSocket(executor) {
     this->fd = fd;
     this->host = host;
@@ -28,8 +28,20 @@ TcpSocket::TcpSocket(Executor *executor, int fd, string host, size_t port) :
         handler(event);
     }, TcpSocket::DEFAULT_FLAGS);
     Logger::info("Opened connection on descriptor " + std::to_string(fd));
-}
+}*/
 
+TcpSocket::TcpSocket(Executor *executor, int fd, sockaddr_in in_addr) :
+    TcpSocket(executor) {
+    this->fd = fd;
+    this->in_addr = in_addr;
+    //this->host = host;
+    //this->port = port;
+    //sscanf(port, "%zu", &this->port);
+    executor->setHandler(fd, [this](const epoll_event &event) {
+        handler(event);
+    }, TcpSocket::DEFAULT_FLAGS);
+    Logger::info("Opened connection on descriptor " + std::to_string(fd));
+}
 void TcpSocket::close() {
     if (fd == NONE) {
         return;
@@ -46,8 +58,9 @@ void TcpSocket::close() {
     r = ::close(fd);
     assert(r == 0);
     fd = NONE;
-    host = "";
-    port = 0;
+    //host = "";
+    //port = 0;
+    in_addr = {};
     canRead = false;
     allDataRead = true;
 }

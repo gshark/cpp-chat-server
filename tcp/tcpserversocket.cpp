@@ -15,8 +15,9 @@ TcpServerSocket::TcpServerSocket(TcpServerSocket &&other) :
     //MAX_EVENTS(other.MAX_EVENTS),
     listenerfd(other.listenerfd),
     pendingfd(other.pendingfd),
-    port(other.port) {
-    host.swap(other.host);
+    in_addr(other.in_addr) {
+    //port(other.port) {
+    //host.swap(other.host);
     pendingConstructorHandler.swap(other.pendingConstructorHandler);
     newConnectionHandler.swap(other.newConnectionHandler);
 }
@@ -37,8 +38,8 @@ void TcpServerSocket::close() {
     r = ::close(listenerfd);
     assert(r == 0);
     listenerfd = NONE;
-    port = 0;
-    host = "";
+    //port = 0;
+    //host = "";
 }
 
 TcpServerSocket::~TcpServerSocket() {
@@ -52,7 +53,8 @@ TcpServerSocket::~TcpServerSocket() {
     newConnectionHandler = NewConnectionHandler();
 }
 
-TcpServerSocket::ConnectedState TcpServerSocket::listen(const string &host, size_t port, NewConnectionHandler newConnectionHandler) {
+TcpServerSocket::ConnectedState TcpServerSocket::listen(size_t port, NewConnectionHandler newConnectionHandler) {
+//TcpServerSocket::ConnectedState TcpServerSocket::listen(const string &host, size_t port, NewConnectionHandler newConnectionHandler) {
     if (listenerfd != NONE) {
         return ALREADY_CONNECTED;
     }
@@ -95,8 +97,9 @@ TcpServerSocket::ConnectedState TcpServerSocket::listen(const string &host, size
         acceptConnection(event);
     }, EPOLLIN);
 
-    this->port = port;
-    this->host = host;
+    //this->port = port;
+    //this->host = host;
+    this->in_addr = serverAddress;
     this->newConnectionHandler = newConnectionHandler;
     return SUCCESS;
 }
@@ -147,8 +150,9 @@ void TcpServerSocket::acceptConnection(const epoll_event &event) {
             Logger::error("An error occurred in TcpServerSocket::acceptConnection() in getnameinfo() in lambda function pendingConstructorHandler(): " + std::string(gai_strerror(r)));
             throw std::runtime_error("TcpServerSocket::acceptConnection(), getnameinfo() failed");
         }
-        size_t port = ntohs(in_addr.sin_port);
-        std::unique_ptr<TcpSocket> socket(new TcpSocket(executor, incomingfd, string(hostbuf), port));
+        //size_t port = ntohs(in_addr.sin_port);
+        //std::unique_ptr<TcpSocket> socket(new TcpSocket(executor, incomingfd, string(hostbuf), port));
+        std::unique_ptr<TcpSocket> socket(new TcpSocket(executor, incomingfd, in_addr));
         return std::move(socket);
     };
     if (newConnectionHandler) {

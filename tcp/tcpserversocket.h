@@ -22,9 +22,9 @@ private:
     Executor *executor;
     int listenerfd;
     int pendingfd;
-    size_t port;
-    string host;
-    sockaddr *adress;
+    //size_t port;
+    //string host;
+    sockaddr_in in_addr;
 
     PendingConstructorHandler pendingConstructorHandler;
     NewConnectionHandler newConnectionHandler;
@@ -44,7 +44,9 @@ public:
     TcpServerSocket(TcpServerSocket&&);
     ~TcpServerSocket();
 
-    ConnectedState listen(const string &host, size_t port, NewConnectionHandler newConnectionHandler);
+    //ConnectedState listen(const string &host, size_t port, NewConnectionHandler newConnectionHandler);
+    ConnectedState listen(size_t port, NewConnectionHandler newConnectionHandler);
+
     bool isListening();
     std::unique_ptr<TcpSocket> getPendingConnection();
 
