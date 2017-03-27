@@ -14,11 +14,12 @@ TcpServerSocket::TcpServerSocket(Executor *executor) :
 TcpServerSocket::TcpServerSocket(TcpServerSocket &&other) :
     //MAX_EVENTS(other.MAX_EVENTS),
     //pendingfd(other.pendingfd),
+    //acceptable_event(other.acceptable_event),
     in_addr(other.in_addr) {
     swap(listenerfd, other.listenerfd);
     //port(other.port) {
     //host.swap(other.host);
-    pendingConstructorHandler.swap(other.pendingConstructorHandler);
+    //pendingConstructorHandler.swap(other.pendingConstructorHandler);
     newConnectionHandler.swap(other.newConnectionHandler);
 }
 
@@ -49,7 +50,7 @@ TcpServerSocket::~TcpServerSocket() {
         Logger::error("TcpServerSocket::~TcpServerSocket() failed: " + std::string(e.what()));
     }
 
-    pendingConstructorHandler = PendingConstructorHandler();
+    //pendingConstructorHandler = PendingConstructorHandler();
     newConnectionHandler = NewConnectionHandler();
 }
 
@@ -123,9 +124,22 @@ int TcpServerSocket::makeSocketNonBlocking(int listenerfd) {
 }
 
 void TcpServerSocket::acceptConnection(const epoll_event &event) {
-    if (isErrorSocket(event)) {
+    /*if (isErrorSocket(event)) {
         return;
+    }*/
+    assert(!isErrorSocket(event));
+    if (newConnectionHandler) {
+        newConnectionHandler();
     }
+    //acceptable_event = event;
+}
+
+std::unique_ptr<TcpSocket> TcpServerSocket::getPendingConnection() {
+    /*if (!pendingConstructorHandler) {
+        return 0;
+    }
+    auto socket = pendingConstructorHandler();
+    pendingConstructorHandler = PendingConstructorHandler();*/
 
     sockaddr_in in_addr;
     socklen_t in_len = sizeof(in_addr);
@@ -134,8 +148,8 @@ void TcpServerSocket::acceptConnection(const epoll_event &event) {
         Logger::error("An error occurred in TcpServerSocket::acceptConnection() in accept(): " + std::string(strerror(errno)));
     }
     //int tmp = incomingfd.get_fd();
-    pendingConstructorHandler = [=]() {
-        //fd_closer incomingfd = fd_closer(tmp);
+    PendingConstructorHandler pendingConstructorHandler = [=]() {
+        //fd_closer incomingfd_closer = fd_closer(incomingfd);
         if (incomingfd == -1) {
             return std::unique_ptr<TcpSocket>(nullptr);
             //throw std::runtime_error("TcpServerSocket::acceptConnection, lambda function pendingConstructorHandler: accept() failed");
@@ -157,23 +171,22 @@ void TcpServerSocket::acceptConnection(const epoll_event &event) {
         std::unique_ptr<TcpSocket> socket(new TcpSocket(executor, incomingfd, in_addr));
         return std::move(socket);
     };
-    if (newConnectionHandler) {
+    /*if (newConnectionHandler) {
         newConnectionHandler();
-    }
-    if (pendingConstructorHandler) {
+    }*/
+    /*if (pendingConstructorHandler) {
         Logger::info("Closing connection on descriptor " + std::to_string(incomingfd));
         //int r = ::close(incomingfd);
         //assert(r == 0);
-    }
-    pendingConstructorHandler = PendingConstructorHandler();
-}
-
-std::unique_ptr<TcpSocket> TcpServerSocket::getPendingConnection() {
-    if (!pendingConstructorHandler) {
-        return 0;
-    }
+    }*/
     auto socket = pendingConstructorHandler();
-    pendingConstructorHandler = PendingConstructorHandler();
+    /*if (pendingConstructorHandler) {
+        Logger::info("Closing connection on descriptor " + std::to_string(incomingfd));
+        int r = ::close(incomingfd);
+        assert(r == 0);
+    }*/
+    //int r = ::close(incomingfd);
+    //pendingConstructorHandler = PendingConstructorHandler();
     return std::move(socket);
 }
 

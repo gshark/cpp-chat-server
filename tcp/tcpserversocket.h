@@ -27,7 +27,8 @@ private:
     //string host;
     sockaddr_in in_addr;
 
-    PendingConstructorHandler pendingConstructorHandler;
+    //const epoll_event acceptable_event;
+    //PendingConstructorHandler pendingConstructorHandler;
     NewConnectionHandler newConnectionHandler;
     //Logger logger;
 
