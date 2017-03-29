@@ -7,7 +7,7 @@
 #include <sys/signalfd.h>
 
 
-fd_closer::fd_closer() : fd(-1) {}
+fd_closer::fd_closer() : fd(NONE) {}
 
 fd_closer::fd_closer(int new_fd) : fd(new_fd) {}
 
@@ -25,7 +25,7 @@ int fd_closer::get_fd() const {
 //fd_closer::fd_closer(fd_closer&& other) : fd(std::move(other.fd)) {}
 fd_closer::fd_closer(fd_closer&& other) {
     fd = other.fd;
-    other.fd = -1;
+    other.fd = NONE;
 }
 
 
@@ -34,9 +34,9 @@ fd_closer& fd_closer::operator = (fd_closer&& other) {
     return *this;
 }
 
-void fd_closer::cancel() {
-    fd = -1;
-}
+/*void fd_closer::cancel() {
+    fd = NONE;
+}*/
 
 
 

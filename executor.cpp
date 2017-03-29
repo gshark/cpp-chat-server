@@ -21,7 +21,7 @@ Executor::Executor() :
     //globalfd = fd_closer(epoll_create1(0));
     //globalfd.fd = epoll_create1(0);
     //TODO проверить ошибку
-    if (globalfd.get_fd() == -1) {
+    if (globalfd.get_fd() == fd_closer::NONE) {
         Logger::error("An error occurred in Executor::Executor() in epoll_create1(): " + std::string(strerror(errno)));
         throw std::runtime_error("Executor::Executor(), epoll_create1() failed");
     }
@@ -52,7 +52,7 @@ Executor::Executor() :
     //sigfd = std::move(fd_closer(signalfd(-1, &mask, 0)));
     sigfd = fd_closer(signalfd(-1, &mask, 0));
     //sigfd.fd = signalfd(-1, &mask, 0);
-    if (sigfd.get_fd() == -1) {
+    if (sigfd.get_fd() == fd_closer::NONE) {
         Logger::error("An error occurred in Executor::Executor() in signalfd()" + std::string(strerror(errno)));
         throw std::runtime_error("Executor::Executor(), signalfd() failed");
     }
@@ -117,11 +117,11 @@ void Executor::changeFlags(int fd, uint32_t flags) {
 
 void Executor::removeHandler(int fd) {
     std::map<int, EventHandler>::iterator found_it = handlers.find(fd);
-    //assert(found_it != handlers.end());
-    if (handlers.find(fd) == handlers.end()) {
+    assert(found_it != handlers.end());
+    /*if (handlers.find(fd) == handlers.end()) {
         //TODO ?? exception или assert
         return;
-    }
+    }*/
     handlers.erase(found_it);
     int r = epoll_ctl(globalfd.get_fd(), EPOLL_CTL_DEL, fd, 0);
     if (r == -1) {

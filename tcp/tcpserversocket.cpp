@@ -8,7 +8,7 @@
 TcpServerSocket::TcpServerSocket(Executor *executor) :
     //MAX_EVENTS(1024),
     executor(executor),
-    listenerfd(NONE) {
+    listenerfd(fd_closer::NONE) {
 }
 
 TcpServerSocket::TcpServerSocket(TcpServerSocket &&other) :
@@ -24,7 +24,7 @@ TcpServerSocket::TcpServerSocket(TcpServerSocket &&other) :
 }
 
 void TcpServerSocket::close() {
-    if (listenerfd.get_fd() == NONE) {
+    if (listenerfd.get_fd() == fd_closer::NONE) {
         return;
     }
     Logger::info("Closing server connection on " + std::to_string(listenerfd.get_fd()));
@@ -57,11 +57,11 @@ TcpServerSocket::~TcpServerSocket() {
 
 TcpServerSocket::ConnectedState TcpServerSocket::listen(size_t port, NewConnectionHandler newConnectionHandler) {
 //TcpServerSocket::ConnectedState TcpServerSocket::listen(const string &host, size_t port, NewConnectionHandler newConnectionHandler) {
-    if (listenerfd.get_fd() != NONE) {
+    if (listenerfd.get_fd() != fd_closer::NONE) {
         return ALREADY_CONNECTED;
     }
     listenerfd = fd_closer(socket(AF_INET, SOCK_STREAM, 0));
-    if (listenerfd.get_fd() == -1) {
+    if (listenerfd.get_fd() == fd_closer::NONE) {
         Logger::error("An error occurred in TcpServerSocket::listen(), in socket(): " + std::string(strerror(errno)));
         throw std::runtime_error("TcpServerSocket::listen(), socket() failed");
     }
@@ -86,7 +86,7 @@ TcpServerSocket::ConnectedState TcpServerSocket::listen(size_t port, NewConnecti
 
     int s;
     s = makeSocketNonBlocking(listenerfd.get_fd());
-    if (s == NONE) {
+    if (s == fd_closer::NONE) {
         throw std::runtime_error("TcpServerSocket::listen(), makeSocketNonBlocking() failed");
     }
     s = ::listen(listenerfd.get_fd(), SOMAXCONN);
@@ -107,19 +107,19 @@ TcpServerSocket::ConnectedState TcpServerSocket::listen(size_t port, NewConnecti
 }
 
 bool TcpServerSocket::isListening() {
-    return listenerfd.get_fd() != NONE;
+    return listenerfd.get_fd() != fd_closer::NONE;
 }
 
 int TcpServerSocket::makeSocketNonBlocking(int listenerfd) {
     int flags = fcntl(listenerfd, F_GETFL, 0);
     if (flags == -1) {
         Logger::error("An error occurred in TcpServerSocket::makeSocketNonBlocking in getting access to file " + std::string(gai_strerror(flags)));
-        return NONE;
+        return fd_closer::NONE;
     }
 
     if (fcntl(listenerfd, F_SETFL, flags | O_NONBLOCK) != 0) {
         Logger::error("An error occurred in TcpServerSocket::makeSocketNonBlocking in setting flags" + std::string(strerror(errno)));
-        return NONE;
+        return fd_closer::NONE;
     }
     return 0;
 }
@@ -145,34 +145,34 @@ std::unique_ptr<TcpSocket> TcpServerSocket::getPendingConnection() {
     sockaddr_in in_addr;
     socklen_t in_len = sizeof(in_addr);
     int incomingfd = accept(listenerfd.get_fd(), (sockaddr*)&in_addr, &in_len);
-    if (incomingfd == -1) {
+    if (incomingfd == fd_closer::NONE) {
         Logger::error("An error occurred in TcpServerSocket::acceptConnection() in accept(): " + std::string(strerror(errno)));
     }
     //int tmp = incomingfd.get_fd();
-    PendingConstructorHandler pendingConstructorHandler = [=]() {
-        fd_closer incomingfd_closer = fd_closer(incomingfd);
-        if (incomingfd_closer.get_fd() == -1) {
-            return std::unique_ptr<TcpSocket>(nullptr);
-            //throw std::runtime_error("TcpServerSocket::acceptConnection, lambda function pendingConstructorHandler: accept() failed");
-        }
-        int r = makeSocketNonBlocking(incomingfd_closer.get_fd());
-        if (r == NONE) {
-            throw std::runtime_error("TcpServerSocket::acceptConnection(), makeSocketNonBlocking() failed in lambda function pendingConstructorHandler()");
-        }
-        /*char hostbuf[NI_MAXHOST], portbuf[NI_MAXSERV];
-        memset(hostbuf, 0, sizeof hostbuf);
-        memset(portbuf, 0, sizeof portbuf);
-        r = getnameinfo((sockaddr*)&in_addr, in_len, hostbuf, sizeof hostbuf, portbuf, sizeof portbuf, NI_NUMERICHOST | NI_NUMERICSERV);
-        if (r != 0) {
-            Logger::error("An error occurred in TcpServerSocket::acceptConnection() in getnameinfo() in lambda function pendingConstructorHandler(): " + std::string(gai_strerror(r)));
-            throw std::runtime_error("TcpServerSocket::acceptConnection(), getnameinfo() failed");
-        }*/
-        //size_t port = ntohs(in_addr.sin_port);
-        //std::unique_ptr<TcpSocket> socket(new TcpSocket(executor, incomingfd, string(hostbuf), port));
-        std::unique_ptr<TcpSocket> socket(new TcpSocket(executor, incomingfd_closer.get_fd(), in_addr));
-        incomingfd_closer.cancel();
-        return std::move(socket);
-    };
+    //PendingConstructorHandler pendingConstructorHandler = [=]() {
+    fd_closer incomingfd_closer = fd_closer(incomingfd);
+    if (incomingfd_closer.get_fd() == fd_closer::NONE) {
+        return std::unique_ptr<TcpSocket>(nullptr);
+        //throw std::runtime_error("TcpServerSocket::acceptConnection, lambda function pendingConstructorHandler: accept() failed");
+    }
+    int r = makeSocketNonBlocking(incomingfd_closer.get_fd());
+    if (r == fd_closer::NONE) {
+        throw std::runtime_error("TcpServerSocket::acceptConnection(), makeSocketNonBlocking() failed in lambda function pendingConstructorHandler()");
+    }
+    /*char hostbuf[NI_MAXHOST], portbuf[NI_MAXSERV];
+    memset(hostbuf, 0, sizeof hostbuf);
+    memset(portbuf, 0, sizeof portbuf);
+    r = getnameinfo((sockaddr*)&in_addr, in_len, hostbuf, sizeof hostbuf, portbuf, sizeof portbuf, NI_NUMERICHOST | NI_NUMERICSERV);
+    if (r != 0) {
+        Logger::error("An error occurred in TcpServerSocket::acceptConnection() in getnameinfo() in lambda function pendingConstructorHandler(): " + std::string(gai_strerror(r)));
+        throw std::runtime_error("TcpServerSocket::acceptConnection(), getnameinfo() failed");
+    }*/
+    //size_t port = ntohs(in_addr.sin_port);
+    //std::unique_ptr<TcpSocket> socket(new TcpSocket(executor, incomingfd, string(hostbuf), port));
+    std::unique_ptr<TcpSocket> socket(new TcpSocket(executor, std::move(incomingfd_closer), in_addr));
+    //incomingfd_closer.cancel();
+    //return std::move(socket);
+    //};
     /*if (newConnectionHandler) {
         newConnectionHandler();
     }*/
@@ -181,7 +181,7 @@ std::unique_ptr<TcpSocket> TcpServerSocket::getPendingConnection() {
         //int r = ::close(incomingfd);
         //assert(r == 0);
     }*/
-    auto socket = pendingConstructorHandler();
+    //auto socket = pendingConstructorHandler();
     /*if (pendingConstructorHandler) {
         Logger::info("Closing connection on descriptor " + std::to_string(incomingfd));
         int r = ::close(incomingfd);

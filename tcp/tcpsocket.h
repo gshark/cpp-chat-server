@@ -21,7 +21,7 @@ private:
     //TODO больше static
     static const int DEFAULT_FLAGS = EPOLLIN | EPOLLHUP;
     static const int OUT_FLAGS = EPOLLOUT | EPOLLIN | EPOLLHUP;
-    static const int NONE = -1;
+    //static const int NONE = -1;
     //const size_t BUFFER_SIZE_ON_READ;
     //const size_t BUFFER_SIZE_ON_WRITE;
 
@@ -30,7 +30,7 @@ private:
 
     //TODO host и port привести в порядок, port -> int, host -> string
     //TcpSocket(Executor *executor, int fd, string host, size_t port);
-    TcpSocket(Executor *executor, int fd, sockaddr_in in_addr);
+    TcpSocket(Executor *executor, fd_closer fd, sockaddr_in in_addr);
     TcpSocket(const TcpSocket&) = delete;
     TcpSocket& operator = (const TcpSocket&) = delete;
     friend class TcpServerSocket;
@@ -52,7 +52,7 @@ private:
     bool* destroyedCookie = nullptr;
 
     void appendData(const char *s, size_t len);
-    int makeSocketNonBlocking(int fd);
+    //int makeSocketNonBlocking(int fd);
     bool isErrorSocket(const epoll_event&);
     void handler(const epoll_event&);
     void tryToWriteData();

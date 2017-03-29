@@ -20,7 +20,7 @@ private:
     size_t index;
     CreationMode mode;
 
-    string toLower(string s) const;
+    //string toLower(string s) const;
     string trim(const string &s);
 protected:
     virtual void parseFirstLine(const string &line) = 0;

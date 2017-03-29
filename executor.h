@@ -28,6 +28,9 @@ private:
 public:
     Executor();
     ~Executor();
+    Executor(const Executor&) = delete;
+    Executor& operator = (const Executor&) = delete;
+
 
     int setHandler(int fd, EventHandler handler, uint32_t flags);
     void removeHandler(int fd);

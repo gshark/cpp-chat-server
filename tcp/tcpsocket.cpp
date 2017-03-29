@@ -12,7 +12,7 @@
 TcpSocket::TcpSocket(Executor *executor) :
     //BUFFER_SIZE_ON_READ(4096),
     //BUFFER_SIZE_ON_WRITE(4096),
-    fd(NONE),
+    fd(fd_closer::NONE),
     flags(DEFAULT_FLAGS),
     executor(executor),
     canRead(true),
@@ -30,20 +30,20 @@ TcpSocket::TcpSocket(Executor *executor) :
     Logger::info("Opened connection on descriptor " + std::to_string(fd));
 }*/
 
-TcpSocket::TcpSocket(Executor *executor, int fd, sockaddr_in in_addr) :
+TcpSocket::TcpSocket(Executor *executor, fd_closer fdi, sockaddr_in in_addr) :
     TcpSocket(executor) {
-    this->fd = fd_closer(fd);
+    this->fd = std::move(fdi);
     this->in_addr = in_addr;
     //this->host = host;
     //this->port = port;
     //sscanf(port, "%zu", &this->port);
-    executor->setHandler(fd, [this](const epoll_event &event) {
+    executor->setHandler(fd.get_fd(), [this](const epoll_event &event) {
         handler(event);
     }, TcpSocket::DEFAULT_FLAGS);
-    Logger::info("Opened connection on descriptor " + std::to_string(fd));
+    Logger::info("Opened connection on descriptor " + std::to_string(fd.get_fd()));
 }
 void TcpSocket::close() {
-    if (fd.get_fd() == NONE) {
+    if (fd.get_fd() == fd_closer::NONE) {
         return;
     }
     Logger::info("Closing connection on descriptor " + std::to_string(fd.get_fd()));
@@ -133,7 +133,7 @@ void TcpSocket::handler(const epoll_event &event) {
     destroyedCookie = nullptr;
 }
 
-int TcpSocket::makeSocketNonBlocking(int socket) {
+/*int TcpSocket::makeSocketNonBlocking(int socket) {
     int flags = fcntl(socket, F_GETFL, 0);
     if (flags == -1) {
         Logger::error("An error occurred in TcpSocket::makeSocketNonBlocking::fcntl, in getting file access: " + std::string(gai_strerror(flags)));
@@ -145,7 +145,7 @@ int TcpSocket::makeSocketNonBlocking(int socket) {
         return NONE;
     }
     return 0;
-}
+}*/
 
 bool TcpSocket::isErrorSocket(const epoll_event &event) {
     return testBit(event.events, EPOLLERR) ||
@@ -159,7 +159,7 @@ int TcpSocket::getfd() {
 }
 
 bool TcpSocket::write(const char *data, size_t len) {
-    if (fd.get_fd() == NONE) {
+    if (fd.get_fd() == fd_closer::NONE) {
         return false;
     }
     appendData(data, len);
@@ -230,5 +230,5 @@ bool TcpSocket::allReadCallback() {
 }
 
 bool TcpSocket::isClosed() {
-    return fd.get_fd() == NONE;
+    return fd.get_fd() == fd_closer::NONE;
 }

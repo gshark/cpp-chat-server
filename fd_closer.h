@@ -7,6 +7,8 @@ class fd_closer
 private:
     int fd;
 public:
+    static const int NONE = -1;
+
     fd_closer();
     fd_closer(int fd);
     fd_closer(const fd_closer&) = delete;

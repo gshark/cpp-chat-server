@@ -18,7 +18,7 @@ private:
     //TODO static
     static const int MAX_EVENTS = 1024;
     //const int MAX_EVENTS;
-    static const int NONE = -1;
+    //static const int NONE = -1;
 
     Executor *executor;
     fd_closer listenerfd;
