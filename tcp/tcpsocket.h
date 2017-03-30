@@ -59,7 +59,6 @@ private:
 public:
     //enum ConnectedState { CONNECTED, ALREADY_CONNECTED, UNKNOWN_HOST};
 
-    TcpSocket(Executor *executor);
     TcpSocket(TcpSocket&&);
     ~TcpSocket();
 

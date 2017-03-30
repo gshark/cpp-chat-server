@@ -9,15 +9,6 @@
 
 #define testBit(mask, bit) ((mask) & (bit))
 
-TcpSocket::TcpSocket(Executor *executor) :
-    //BUFFER_SIZE_ON_READ(4096),
-    //BUFFER_SIZE_ON_WRITE(4096),
-    fd(fd_closer::NONE),
-    flags(DEFAULT_FLAGS),
-    executor(executor),
-    canRead(true),
-    allDataRead(false) {}
-
 /*TcpSocket::TcpSocket(Executor *executor, int fd, string host, size_t port) :
     TcpSocket(executor) {
     this->fd = fd;
@@ -31,9 +22,12 @@ TcpSocket::TcpSocket(Executor *executor) :
 }*/
 
 TcpSocket::TcpSocket(Executor *executor, fd_closer fdi, sockaddr_in in_addr) :
-    TcpSocket(executor) {
-    this->fd = std::move(fdi);
-    this->in_addr = in_addr;
+    fd(std::move(fdi)),
+    flags(DEFAULT_FLAGS),
+    in_addr(in_addr),
+    executor(executor),
+    canRead(true),
+    allDataRead(false) {
     //this->host = host;
     //this->port = port;
     //sscanf(port, "%zu", &this->port);
