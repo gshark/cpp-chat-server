@@ -13,9 +13,10 @@ fd_closer::fd_closer(int new_fd) : fd(new_fd) {}
 
 
 fd_closer::~fd_closer() {
-    ::close(fd);
-    //int r = ::close(fd);
-    //assert(r == 0);
+    if (fd != NONE) {
+        int r = ::close(fd);
+        assert(r == 0);
+    }
 }
 
 int fd_closer::get_fd() const {
