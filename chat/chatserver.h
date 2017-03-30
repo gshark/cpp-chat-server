@@ -29,7 +29,6 @@ private:
 
     //Logger logger;
     std::unique_ptr<HttpServer> httpServer;
-    string getStringByFile(const char *name);
     size_t numUsers;
     size_t hash(size_t userId);
     std::map<size_t, int> firstReadMessage, lastReadMessage;

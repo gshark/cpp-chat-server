@@ -137,16 +137,6 @@ void ChatServer::start(int port) {
     httpServer->start(port);
 }
 
-string ChatServer::getStringByFile(const char *name) {
-    ifstream in(name);
-    string line;
-    string result;
-    while (getline(in, line)) {
-        result += line + '\n';
-    }
-    return result;
-}
-
 size_t ChatServer::getUserIdByCookie(string cookie) {
     if (cookie == "") {
         return ++numUsers;
