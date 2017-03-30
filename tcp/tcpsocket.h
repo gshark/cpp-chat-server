@@ -59,7 +59,6 @@ private:
 public:
     //enum ConnectedState { CONNECTED, ALREADY_CONNECTED, UNKNOWN_HOST};
 
-    TcpSocket(TcpSocket&&);
     ~TcpSocket();
 
     //ConnectedState connectToHost(const string& host, size_t port = 80);
