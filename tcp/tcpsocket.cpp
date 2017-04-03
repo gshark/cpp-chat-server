@@ -9,18 +9,6 @@
 
 #define testBit(mask, bit) ((mask) & (bit))
 
-/*TcpSocket::TcpSocket(Executor *executor, int fd, string host, size_t port) :
-    TcpSocket(executor) {
-    this->fd = fd;
-    this->host = host;
-    this->port = port;
-    //sscanf(port, "%zu", &this->port);
-    executor->setHandler(fd, [this](const epoll_event &event) {
-        handler(event);
-    }, TcpSocket::DEFAULT_FLAGS);
-    Logger::info("Opened connection on descriptor " + std::to_string(fd));
-}*/
-
 TcpSocket::TcpSocket(Executor *executor, fd_closer fdi, sockaddr_in in_addr) :
     fd(std::move(fdi)),
     flags(DEFAULT_FLAGS),
@@ -28,9 +16,6 @@ TcpSocket::TcpSocket(Executor *executor, fd_closer fdi, sockaddr_in in_addr) :
     executor(executor),
     canRead(true),
     allDataRead(false) {
-    //this->host = host;
-    //this->port = port;
-    //sscanf(port, "%zu", &this->port);
     executor->setHandler(fd.get_fd(), [this](const epoll_event &event) {
         handler(event);
     }, TcpSocket::DEFAULT_FLAGS);
@@ -42,18 +27,12 @@ void TcpSocket::close() {
     }
     Logger::info("Closing connection on descriptor " + std::to_string(fd.get_fd()));
     clearBuffers();
-    //std::cerr << "123";
     executor->removeHandler(fd.get_fd());
     int r = ::shutdown(fd.get_fd(), SHUT_RDWR);
     if (r != 0 && errno != ENOTCONN) {
         Logger::error(std::string("Shutdown error: ") + strerror(errno));
         throw std::runtime_error("TcpSocket::close(), shutdown() failed");
     }
-    /*r = ::close(fd);
-    assert(r == 0);
-    fd = NONE;*/
-    //host = "";
-    //port = 0;
     in_addr = {};
     canRead = false;
     allDataRead = true;
@@ -92,7 +71,6 @@ void TcpSocket::handler(const epoll_event &event) {
         bool reachedEndOfFile = false;
         bool noBytesRead = true;
         char buffer[BUFFER_SIZE_ON_READ];
-        //memset(buffer, 0, sizeof buffer);
         while (true) {
             ssize_t readBytes = ::read(fd.get_fd(), buffer, BUFFER_SIZE_ON_READ);
             if (readBytes == -1) {
@@ -105,11 +83,7 @@ void TcpSocket::handler(const epoll_event &event) {
                 break;
             } else {
                 noBytesRead = false;
-                //TODO закидывать данные массово, insert
                 readBuffer.insert(readBuffer.end(), buffer, buffer + readBytes);
-                /*for (ssize_t i = 0; i != readBytes; ++i) {
-                    readBuffer.push_back(buffer[i]);
-                }*/
             }
         }
         if (!noBytesRead && dataReceivedHandler) {
@@ -127,20 +101,6 @@ void TcpSocket::handler(const epoll_event &event) {
     destroyedCookie = nullptr;
 }
 
-/*int TcpSocket::makeSocketNonBlocking(int socket) {
-    int flags = fcntl(socket, F_GETFL, 0);
-    if (flags == -1) {
-        Logger::error("An error occurred in TcpSocket::makeSocketNonBlocking::fcntl, in getting file access: " + std::string(gai_strerror(flags)));
-        return NONE;
-    }
-
-    if (fcntl(socket, F_SETFL, flags | O_NONBLOCK) != 0) {
-        Logger::error("An error occurred in TcpSocket::makeSocketNonBlocking::fcntl in setting flags" + std::string(strerror(errno)));
-        return NONE;
-    }
-    return 0;
-}*/
-
 bool TcpSocket::isErrorSocket(const epoll_event &event) {
     return testBit(event.events, EPOLLERR) ||
            testBit(event.events, EPOLLHUP) ||
@@ -148,9 +108,6 @@ bool TcpSocket::isErrorSocket(const epoll_event &event) {
           !testBit(event.events, EPOLLOUT);
 }
 
-int TcpSocket::getfd() {
-    return fd.get_fd();
-}
 
 bool TcpSocket::write(const char *data, size_t len) {
     if (fd.get_fd() == fd_closer::NONE) {
@@ -163,7 +120,6 @@ bool TcpSocket::write(const char *data, size_t len) {
 
 bool TcpSocket::write(const string &s) {
     return TcpSocket::write(s.data(), s.size());
-    //TODO с_str() -> data
 }
 
 string TcpSocket::readBytesFromBuffer() {

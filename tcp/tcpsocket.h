@@ -45,24 +45,19 @@ private:
 
     ClosedConnectionHandler closedConnectionHandler;
     DataReceivedHandler dataReceivedHandler;
-    //Logger logger;
     Executor *executor;
     bool canRead;
     bool allDataRead;
     bool* destroyedCookie = nullptr;
 
     void appendData(const char *s, size_t len);
-    //int makeSocketNonBlocking(int fd);
     bool isErrorSocket(const epoll_event&);
     void handler(const epoll_event&);
     void tryToWriteData();
 public:
-    //enum ConnectedState { CONNECTED, ALREADY_CONNECTED, UNKNOWN_HOST};
 
     ~TcpSocket();
 
-    //ConnectedState connectToHost(const string& host, size_t port = 80);
-    int getfd();
     bool write(const char *data, size_t len);
     bool write(const std::string &s);
     string readBytesFromBuffer();

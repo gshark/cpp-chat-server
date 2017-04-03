@@ -9,23 +9,16 @@ HttpServer::HttpServer(Executor *executor) :
     listener(executor) {}
 
 void HttpServer::start(int port) {
-    //TcpServerSocket::ConnectedState state = listener.listen("127.0.0.1", port, [this]() {
     TcpServerSocket::ConnectedState state = listener.listen(port, [this]() {
         readRequest(listener.getPendingConnection());
     });
 
     if (state == TcpServerSocket::ALREADY_BINDED) {
-        //Logger::error("Already bound");
         throw std::runtime_error("Already bound");
-        //return ALREADY_BINDED;
-        //Перестать работать TODO
     }
     if (state == TcpServerSocket::ALREADY_CONNECTED) {
-        //Logger::error("Already started");
         throw std::runtime_error("Already started");
-        //return ALREADY_STARTED;
     }
-    //return SUCCESS;
 }
 
 HttpServer::~HttpServer() {

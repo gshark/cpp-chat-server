@@ -4,10 +4,8 @@
 #include <cassert>
 
 int main(int, char**) {
-    //preparation::prepare();
     Executor executor;
     ChatServer server(&executor);
-    //Logger logger;
     try {
         Executor executor;
         ChatServer server(&executor);

@@ -23,7 +23,6 @@ int fd_closer::get_fd() const {
     return fd;
 }
 
-//fd_closer::fd_closer(fd_closer&& other) : fd(std::move(other.fd)) {}
 fd_closer::fd_closer(fd_closer&& other) {
     fd = other.fd;
     other.fd = NONE;
@@ -35,11 +34,4 @@ fd_closer& fd_closer::operator = (fd_closer&& other) {
     return *this;
 }
 
-/*void fd_closer::cancel() {
-    fd = NONE;
-}*/
-
-
-
-/*chatserver*/
 

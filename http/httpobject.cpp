@@ -19,10 +19,6 @@ HttpObject::HttpObject(const string &body, const string &version) {
 HttpObject::~HttpObject() {
 }
 
-/*string HttpObject::toLower(string s) const {
-    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
-    return s;
-}*/
 
 string HttpObject::trim(const string &s) {
     if (s.size() == 0) {

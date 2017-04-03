@@ -13,10 +13,6 @@ ChatServer::ChatServer(Executor *executor) :
             filename = "/index.html";
         }
         if (filename != "/index.html" && filename == "/jquery.js" && filename == "/script.js") {
-        /*cerr << filename << endl;
-        filename = "." + filename;
-        ifstream in(filename.c_str());
-        if (!in) {*/
             HttpResponse responseToSend(404, "Not Found", request.getVersion(),
                            "<html>"
                            "<body>"
@@ -26,12 +22,6 @@ ChatServer::ChatServer(Executor *executor) :
             responseHandler.response(responseToSend);
             return;
         }
-
-        /*string line;
-        string result;
-        while (getline(in, line)) {
-            result += line + '\n';
-        }*/
         string result;
         if (filename == "/index.html")
             result = preparation::INDEX_DATA;
@@ -62,6 +52,8 @@ ChatServer::ChatServer(Executor *executor) :
         responseToSend.addHeader("Set-Cookie", "hash=" + std::to_string(hash(userId)) + "; expires=Fri, 31 Dec 2099 23:59:59 GMT;");
         responseHandler.response(responseToSend);
     });
+
+
 
     httpServer->addHttpMatcher(HttpMatcher("POST", "/messages"), [=](HttpRequest request, HttpServer::Response responseHandler) {
         string cookie = request.header("Cookie");
@@ -99,9 +91,6 @@ ChatServer::ChatServer(Executor *executor) :
                 firstReadMessage[userId] = lastReadMessage[userId] = history.size() - 1;
             }
 
-
-            //QUrl url(request.getUrl().c_str());
-            //QUrlQuery urlQuery(url);
             string str_url = request.getUrl();
             int leftBorder;
             if (str_url.find("all=true") != string::npos) {
@@ -174,13 +163,6 @@ string ChatServer::getMessage(const string& s) {
 }
 
 size_t ChatServer::hash(size_t userId) {
-    /*static size_t p = 239;
-    string s = std::to_string(userId);
-    size_t h = 0;
-    for (size_t i = 0; i < s.size(); ++i) {
-        h = h * p + s[i];
-    }
-    return h;*/
     std::hash<size_t> hash_fn;
     return hash_fn(userId);
 
