@@ -12,7 +12,7 @@ ChatServer::ChatServer(Executor *executor) :
         if (filename == "/") {
             filename = "/index.html";
         }
-        if (filename != "/index.html" && filename == "/jquery.js" && filename == "/script.js") {
+        if (filename != "/index.html") {
             HttpResponse responseToSend(404, "Not Found", request.getVersion(),
                            "<html>"
                            "<body>"
@@ -22,32 +22,53 @@ ChatServer::ChatServer(Executor *executor) :
             responseHandler.response(responseToSend);
             return;
         }
-        string result;
-        if (filename == "/index.html")
-            result = preparation::INDEX_DATA;
-        else if (filename == "/jquery.js")
-            result = preparation::JQUERY_DATA;
-        else if (filename == "/script.js")
-            result = preparation::SCRIPT_DATA;
+
         string cookie = request.header("Cookie");
         size_t userId = getUserIdByCookie(cookie);
         if (userId == 0) {
             userId = ++numUsers;
         }
-        HttpResponse responseToSend(200, "OK", request.getVersion(), result);
+        HttpResponse responseToSend(200, "OK", request.getVersion(), preparation::INDEX_DATA);
         if (request.isKeepAlive()) {
             responseToSend.addHeader("Connection", "Keep-Alive");
         }
+        responseToSend.addHeader("Content-Type", "text/html");
+        responseToSend.addHeader("Set-Cookie", "user=" + std::to_string(userId) + "; expires=Fri, 31 Dec 2099 23:59:59 GMT;");
+        responseToSend.addHeader("Set-Cookie", "hash=" + std::to_string(hash(userId)) + "; expires=Fri, 31 Dec 2099 23:59:59 GMT;");
+        responseHandler.response(responseToSend);
+    });
 
-        size_t pos = filename.find(".");
-        string type = filename.substr(pos + 1, filename.size() - pos - 1);
-
-        if (type == "js") {
-            responseToSend.addHeader("Content-Type", "text/javascript");
-        } else if (type == "html") {
-            responseToSend.addHeader("Content-Type", "text/html");
+    httpServer->addHttpMatcher(HttpMatcher("Script", "/script.js"), [this](HttpRequest request, HttpServer::Response responseHandler) {
+        //string result;
+        //result = preparation::SCRIPT_DATA;
+        string cookie = request.header("Cookie");
+        size_t userId = getUserIdByCookie(cookie);
+        if (userId == 0) {
+            userId = ++numUsers;
         }
+        HttpResponse responseToSend(200, "OK", request.getVersion(), preparation::SCRIPT_DATA);
+        if (request.isKeepAlive()) {
+            responseToSend.addHeader("Connection", "Keep-Alive");
+        }
+        responseToSend.addHeader("Content-Type", "text/javascript");
+        responseToSend.addHeader("Set-Cookie", "user=" + std::to_string(userId) + "; expires=Fri, 31 Dec 2099 23:59:59 GMT;");
+        responseToSend.addHeader("Set-Cookie", "hash=" + std::to_string(hash(userId)) + "; expires=Fri, 31 Dec 2099 23:59:59 GMT;");
+        responseHandler.response(responseToSend);
+    });
 
+    httpServer->addHttpMatcher(HttpMatcher("JQuery", "/jquery.js"), [this](HttpRequest request, HttpServer::Response responseHandler) {
+        //string result;
+        //result = preparation::SCRIPT_DATA;
+        string cookie = request.header("Cookie");
+        size_t userId = getUserIdByCookie(cookie);
+        if (userId == 0) {
+            userId = ++numUsers;
+        }
+        HttpResponse responseToSend(200, "OK", request.getVersion(), preparation::JQUERY_DATA);
+        if (request.isKeepAlive()) {
+            responseToSend.addHeader("Connection", "Keep-Alive");
+        }
+        responseToSend.addHeader("Content-Type", "text/javascript");
         responseToSend.addHeader("Set-Cookie", "user=" + std::to_string(userId) + "; expires=Fri, 31 Dec 2099 23:59:59 GMT;");
         responseToSend.addHeader("Set-Cookie", "hash=" + std::to_string(hash(userId)) + "; expires=Fri, 31 Dec 2099 23:59:59 GMT;");
         responseHandler.response(responseToSend);

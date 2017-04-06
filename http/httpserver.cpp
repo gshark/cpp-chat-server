@@ -39,6 +39,14 @@ void HttpServer::finish(HttpServer::Connection *conn) {
 
     if (!found) {
         for (size_t i = 0; i != matchers.size(); ++i) {
+            if (matchers[i].first.getUrl() == conn->request.getPath()) {
+                matchers[i].second(conn->request, Response(conn->socket.get()));
+                found = true;
+            }
+        }
+    }
+    if (!found) {
+        for (size_t i = 0; i != matchers.size(); ++i) {
             if (matchers[i].first.getMethod() == "" && matchers[i].first.getUrl() == "") {
                 matchers[i].second(conn->request, Response(conn->socket.get()));
             }
