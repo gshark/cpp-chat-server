@@ -39,38 +39,12 @@ ChatServer::ChatServer(Executor *executor) :
     });
 
     httpServer->addHttpMatcher(HttpMatcher("Script", "/script.js"), [this](HttpRequest request, HttpServer::Response responseHandler) {
-        //string result;
-        //result = preparation::SCRIPT_DATA;
-        string cookie = request.header("Cookie");
-        size_t userId = getUserIdByCookie(cookie);
-        if (userId == 0) {
-            userId = ++numUsers;
-        }
-        HttpResponse responseToSend(200, "OK", request.getVersion(), preparation::SCRIPT_DATA);
-        if (request.isKeepAlive()) {
-            responseToSend.addHeader("Connection", "Keep-Alive");
-        }
-        responseToSend.addHeader("Content-Type", "text/javascript");
-        responseToSend.addHeader("Set-Cookie", "user=" + std::to_string(userId) + "; expires=Fri, 31 Dec 2099 23:59:59 GMT;");
-        responseToSend.addHeader("Set-Cookie", "hash=" + std::to_string(hash(userId)) + "; expires=Fri, 31 Dec 2099 23:59:59 GMT;");
+        HttpResponse responseToSend = genJSResponse(request, preparation::SCRIPT_DATA);
         responseHandler.response(responseToSend);
     });
 
     httpServer->addHttpMatcher(HttpMatcher("JQuery", "/jquery.js"), [this](HttpRequest request, HttpServer::Response responseHandler) {
-        //string result;
-        //result = preparation::SCRIPT_DATA;
-        string cookie = request.header("Cookie");
-        size_t userId = getUserIdByCookie(cookie);
-        if (userId == 0) {
-            userId = ++numUsers;
-        }
-        HttpResponse responseToSend(200, "OK", request.getVersion(), preparation::JQUERY_DATA);
-        if (request.isKeepAlive()) {
-            responseToSend.addHeader("Connection", "Keep-Alive");
-        }
-        responseToSend.addHeader("Content-Type", "text/javascript");
-        responseToSend.addHeader("Set-Cookie", "user=" + std::to_string(userId) + "; expires=Fri, 31 Dec 2099 23:59:59 GMT;");
-        responseToSend.addHeader("Set-Cookie", "hash=" + std::to_string(hash(userId)) + "; expires=Fri, 31 Dec 2099 23:59:59 GMT;");
+        HttpResponse responseToSend = genJSResponse(request, preparation::JQUERY_DATA);
         responseHandler.response(responseToSend);
     });
 
@@ -203,4 +177,20 @@ string ChatServer::packageToJsonHistory(int l, int r) {
 
 string ChatServer::Message::toJson() {
     return "{\"from\": " + std::to_string(from) + ", \"timestamp\": " + std::to_string(time) + ", \"text\": \"" + text + "\"}";
+}
+
+HttpResponse ChatServer::genJSResponse(HttpRequest request, std::string data) {
+    string cookie = request.header("Cookie");
+    size_t userId = getUserIdByCookie(cookie);
+    if (userId == 0) {
+        userId = ++numUsers;
+    }
+    HttpResponse responseToSend(200, "OK", request.getVersion(), data);
+    if (request.isKeepAlive()) {
+        responseToSend.addHeader("Connection", "Keep-Alive");
+    }
+    responseToSend.addHeader("Content-Type", "text/javascript");
+    responseToSend.addHeader("Set-Cookie", "user=" + std::to_string(userId) + "; expires=Fri, 31 Dec 2099 23:59:59 GMT;");
+    responseToSend.addHeader("Set-Cookie", "hash=" + std::to_string(hash(userId)) + "; expires=Fri, 31 Dec 2099 23:59:59 GMT;");
+    return responseToSend;
 }

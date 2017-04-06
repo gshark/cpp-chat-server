@@ -27,6 +27,7 @@ private:
         friend class ChatServer;
     };
 
+    HttpResponse genJSResponse(HttpRequest request, std::string data);
     //Logger logger;
     std::unique_ptr<HttpServer> httpServer;
     size_t numUsers;
